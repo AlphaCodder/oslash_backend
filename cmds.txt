@@ -1,0 +1,52 @@
+mutation createUser {
+  addUser(email: "gefrey@gmail.com", password: "123") {
+    email
+    id
+    password
+  }
+}
+mutation addSing {
+  addShortcut(
+    email: "alice@gmail.com"
+    title: "Sing"
+    url: "https://www.sing.com"
+  ) {
+    title
+    url
+    id
+  }
+}
+
+mutation updSing {
+  updateShortcut(
+    email: "alice@gmail.com"
+    title: "Sing"
+    url: "https://www.sing.co.in"
+  ) {
+    title
+    url
+    id
+  }
+}
+
+mutation rmvSing {
+  removeShortcut(email: "alice@gmail.com", title: "Sing") {
+    id
+    title
+    url
+  }
+}
+
+query printAll {
+  users {
+    email
+    id
+    password
+    shortcuts {
+      id
+      title
+      url
+    }
+  }
+}
+

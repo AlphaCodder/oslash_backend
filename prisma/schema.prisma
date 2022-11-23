@@ -1,0 +1,29 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.sqlite"
+}
+ 
+generator client {
+  provider = "prisma-client-js"
+}
+
+
+// user model with email and password with a list of shortcuts
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  shortcuts ShortcutItem[] 
+}
+  
+// shortcut model with a name, url, and a list of tags
+model ShortcutItem {
+  id        Int      @id @default(autoincrement())
+  title     String   
+  url       String
+  user      User     @relation(fields: [userId], references: [id])
+  userId    Int
+}
