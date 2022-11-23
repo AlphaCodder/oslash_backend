@@ -283,4 +283,3 @@ builder.mutationType({
 });
 
 export const schema = builder.toSchema()
-export { CurrentLoggedInUser }
