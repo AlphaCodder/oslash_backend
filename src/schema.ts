@@ -1,6 +1,9 @@
 import SchemaBuilder from '@pothos/core';
 import SimpleObjectsPlugin from '@pothos/plugin-simple-objects';
 import { GraphQLError } from 'graphql'
+import * as bcrypt from "bcryptjs";
+import * as jwt from "jsonwebtoken";
+import { APP_SECRET, decodeAuthHeader } from './utils/auth';
 import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 
@@ -100,8 +103,7 @@ builder.queryType({
 // Mutations on the schema
 builder.mutationType({
     fields: t => ({
-        // add user
-        addUser: t.field({
+        signup: t.field({
             type: "User",
             args: {
                 email: t.arg.string({
@@ -112,24 +114,45 @@ builder.mutationType({
                 }),
             },
             resolve: async (parent, args) => {
-                // check if user already exists
-                const userIsPresent = await prisma.user.findFirst({
-                    where: {
-                        email: args.email
-                    }
-                })
-                if (userIsPresent) {
-                    throw new GraphQLError("User already exists")
-                }
+                const password = await bcrypt.hash(args.password, 10);
                 const user = await prisma.user.create({
                     data: {
                         email: args.email,
-                        password: args.password
+                        password: password
                     }
                 })
                 return user
             }
         }),
+        login: t.field({
+            type: "String",
+            args: {
+                email: t.arg.string({
+                    required: true,
+                }),
+                password: t.arg.string({
+                    required: true,
+                }),
+            },
+
+            resolve: async (parent, args) => {
+                const user = await prisma.user.findUnique({
+                    where: {
+                        email: args.email
+                    }
+                })
+                if (!user) {
+                    throw new GraphQLError("User not found")
+                }
+                const passwordValid = await bcrypt.compare(args.password, user.password);
+                if (!passwordValid) {
+                    throw new GraphQLError("Invalid password")
+                }
+                
+                return jwt.sign({ userId : user.id }, APP_SECRET)
+            },
+        }),
+        
         // create shortcut to user
         addShortcut: t.field({
             type: "ShortcutItem",
@@ -260,3 +283,4 @@ builder.mutationType({
 });
 
 export const schema = builder.toSchema()
+export { CurrentLoggedInUser }
