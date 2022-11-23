@@ -1,7 +1,7 @@
 import { envelop, Plugin } from '@envelop/core'
 import { GraphQLError } from 'graphql'
 
-const myPlugin: Plugin = {
+const authPlugin: Plugin = {
     onParse({ params }) {
         console.log('Parse started!')
 
@@ -32,4 +32,4 @@ const myPlugin: Plugin = {
 // })
 
 // export the plugin 
-export { myPlugin }
+export { authPlugin }
