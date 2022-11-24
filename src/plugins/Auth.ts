@@ -6,8 +6,9 @@ import { APP_SECRET } from '../utils/auth';
 const authPlugin: Plugin = {
 
     // get the authorization header from the request
-    onExecute({ args:  { contextValue }, setResultAndStopExecution }) {
+    onExecute({ args:  { contextValue, operationName }, setResultAndStopExecution }) {
         // skip when login and signup mutations are called 
+        if (operationName === 'login' || operationName === 'signup') return;
 
         const token = contextValue.req.headers.authorization
 
