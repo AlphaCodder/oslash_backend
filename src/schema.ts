@@ -5,7 +5,12 @@ import * as bcrypt from "bcryptjs";
 import * as jwt from "jsonwebtoken";
 import { APP_SECRET, decodeAuthHeader } from './utils/auth';
 import { PrismaClient } from '@prisma/client'
+import { authPlugin } from './plugins/Auth';
 const prisma = new PrismaClient()
+
+type AuthToken = {
+    token : string;
+}
 
 type ShortcutItem = {
     id: number;
@@ -24,11 +29,17 @@ const builder = new SchemaBuilder<{
     Objects: {
         User: User;
         ShortcutItem: ShortcutItem;
+        AuthToken: AuthToken;
     },
 }>({
     plugins: [SimpleObjectsPlugin],
 });
 
+builder.objectType('AuthToken', {
+    fields: t => ({
+        token: t.exposeString('token'),
+    }),
+});
 
 builder.objectType("ShortcutItem", {
     fields: t => ({
@@ -104,7 +115,7 @@ builder.queryType({
 builder.mutationType({
     fields: t => ({
         signup: t.field({
-            type: "User",
+            type: "AuthToken",
             args: {
                 email: t.arg.string({
                     required: true,
@@ -121,11 +132,14 @@ builder.mutationType({
                         password: password
                     }
                 })
-                return user
+                const token = jwt.sign({ userId: user.id }, APP_SECRET);
+                return {
+                    token
+                }
             }
         }),
         login: t.field({
-            type: "String",
+            type: "AuthToken",
             args: {
                 email: t.arg.string({
                     required: true,
@@ -148,8 +162,10 @@ builder.mutationType({
                 if (!passwordValid) {
                     throw new GraphQLError("Invalid password")
                 }
-                
-                return jwt.sign({ userId : user.id }, APP_SECRET)
+                const token = jwt.sign({ userId: user.id }, APP_SECRET);
+                return {
+                    token
+                }
             },
         }),
         
@@ -232,7 +248,7 @@ builder.mutationType({
                 return await prisma.shortcutItem.delete({
                     where: {
                         id: shortcutIsPresent.id
-                    }
+                    },
                 })
             }
         }),
@@ -283,3 +299,4 @@ builder.mutationType({
 });
 
 export const schema = builder.toSchema()
+export { AuthToken }
