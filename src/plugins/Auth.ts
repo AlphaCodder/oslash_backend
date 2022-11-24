@@ -1,10 +1,7 @@
-import { envelop, Plugin } from '@envelop/core'
+import { Plugin } from '@envelop/core'
 import { GraphQLError } from 'graphql'
-import { argsToArgsConfig } from 'graphql/type/definition';
 import * as jwt from "jsonwebtoken";
 import { APP_SECRET } from '../utils/auth';
-let currentUserId = 0;
-
 
 const authPlugin: Plugin = {
 
