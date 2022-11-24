@@ -1,5 +1,4 @@
 import SchemaBuilder from '@pothos/core';
-import SimpleObjectsPlugin from '@pothos/plugin-simple-objects';
 import { GraphQLError } from 'graphql'
 import * as bcrypt from "bcryptjs";
 import * as jwt from "jsonwebtoken";
@@ -32,7 +31,6 @@ const builder = new SchemaBuilder<{
         AuthToken: AuthToken;
     },
 }>({
-    plugins: [SimpleObjectsPlugin],
 });
 
 builder.objectType('AuthToken', {
@@ -150,6 +148,7 @@ builder.mutationType({
             },
 
             resolve: async (parent, args) => {
+
                 const user = await prisma.user.findUnique({
                     where: {
                         email: args.email
@@ -163,6 +162,8 @@ builder.mutationType({
                     throw new GraphQLError("Invalid password")
                 }
                 const token = jwt.sign({ userId: user.id }, APP_SECRET);
+
+                
                 return {
                     token
                 }
@@ -173,9 +174,6 @@ builder.mutationType({
         addShortcut: t.field({
             type: "ShortcutItem",
             args: {
-                email: t.arg.string({
-                    required: true,
-                }),
                 title: t.arg.string({
                     required: true,
                 }),
@@ -183,10 +181,10 @@ builder.mutationType({
                     required: true,
                 }),
             },
-            resolve: async (parent, args) => {
+            resolve: async (parent, args, contextValue) => {
                 const user = await prisma.user.findUnique({
                     where: {
-                        email: args.email
+                        id: contextValue.req.userId,
                     }
                 })
                 if (!user) {
@@ -219,17 +217,14 @@ builder.mutationType({
         removeShortcut: t.field({
             type: "ShortcutItem",
             args: {
-                email: t.arg.string({
-                    required: true,
-                }),
                 title: t.arg.string({
                     required: true,
                 }),
             },
-            resolve: async (parent, args) => {
+            resolve: async (parent, args, contextValue) => {
                 const user = await prisma.user.findUnique({
                     where: {
-                        email: args.email
+                        id: contextValue.req.userId,
                     }
                 })
                 if (!user) {
@@ -256,9 +251,6 @@ builder.mutationType({
         updateShortcut: t.field({
             type: "ShortcutItem",
             args: {
-                email: t.arg.string({
-                    required: true,
-                }),
                 title: t.arg.string({
                     required: true,
                 }),
@@ -266,10 +258,10 @@ builder.mutationType({
                     required: true,
                 }),
             },
-            resolve: async (parent, args) => {
+            resolve: async (parent, args, contextValue ) => {
                 const user = await prisma.user.findUnique({
                     where: {
-                        email: args.email
+                        id: contextValue.req.userId,
                     }
                 })
                 if (!user) {
