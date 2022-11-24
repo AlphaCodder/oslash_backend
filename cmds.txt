@@ -53,3 +53,65 @@ query printAll {
 {
   "Authorization" : "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjYsImlhdCI6MTY2OTI3NzQ2Mn0.bu2EiWGKDSo6soCSNu0hQ9XF7rIhKghl3pHrVj7-5Xw"
 }
+
+mutation signup {
+  signup(email: "pritam@gmail.com", password: "oslash") {
+    token
+  }
+}
+
+mutation login {
+  login(email: "test@gmail.com", password: "start"){
+    token
+  }
+}
+
+query MyQuery {
+  users {
+    email
+    id
+    password  
+  }
+}
+
+mutation addSing {
+  addShortcut(
+    title: "Singer"
+    url: "https://www.sing.com"
+  ) {
+    title
+    url
+    id
+  }
+}
+mutation updSing {
+  updateShortcut(
+    title: "Singer"
+    url: "https://www.singer.com"
+  ) {
+    title
+    url
+    id
+  }
+}
+
+mutation rmvSing {
+  removeShortcut(title: "Singer") {
+    id
+    title
+    url
+  }
+}
+
+query getMy{
+  getMyShortcuts{
+    title
+    url
+  }
+}
+
+query getUrl {
+  getUrl(title:"Singer"){
+    url
+  }
+}

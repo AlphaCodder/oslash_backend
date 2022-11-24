@@ -9,17 +9,20 @@ const authPlugin: Plugin = {
     onExecute({ args:  { contextValue, operationName }, setResultAndStopExecution }) {
         // skip when login and signup mutations are called 
         if (operationName === 'login' || operationName === 'signup') return;
-
+        
         const token = contextValue.req.headers.authorization
-
+        if (!token) {
+            setResultAndStopExecution({
+                errors: [new GraphQLError('No token provided')],
+            })
+        }
         // verifying the token and getting the user id else throw an error
         if (!jwt.verify(token, APP_SECRET)) {
-            setResultAndStopExecution(new GraphQLError('Not authenticated'))
+            setResultAndStopExecution(new GraphQLError('Provide a valid token'))
         }
 
         // passing it to the context so that it can be used in the resolvers
         contextValue.req.userId = jwt.verify(token, APP_SECRET).userId
-
     }
 }
 

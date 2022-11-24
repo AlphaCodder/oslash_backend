@@ -4,11 +4,15 @@ import * as bcrypt from "bcryptjs";
 import * as jwt from "jsonwebtoken";
 import { APP_SECRET, decodeAuthHeader } from './utils/auth';
 import { PrismaClient } from '@prisma/client'
-import { authPlugin } from './plugins/Auth';
 const prisma = new PrismaClient()
 
 type AuthToken = {
     token : string;
+}
+
+type Performance = {
+    success: number
+    failure: number
 }
 
 type ShortcutItem = {
