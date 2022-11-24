@@ -7,6 +7,8 @@ const authPlugin: Plugin = {
 
     // get the authorization header from the request
     onExecute({ args:  { contextValue }, setResultAndStopExecution }) {
+        // skip when login and signup mutations are called 
+
         const token = contextValue.req.headers.authorization
 
         // verifying the token and getting the user id else throw an error

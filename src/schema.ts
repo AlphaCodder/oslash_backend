@@ -127,17 +127,25 @@ builder.mutationType({
                     required: true,
                 }),
             },
-            resolve: async (parent, args) => {
-                const password = await bcrypt.hash(args.password, 10);
+           resolve: async (parent, args) => {
+                // check if user already exists
+                const userExists = await prisma.user.findFirst({
+                    where: {
+                        email: args.email
+                    }
+                })
+                if (userExists) {
+                    throw new GraphQLError('User already exists')
+                }
+                const password = await bcrypt.hash(args.password, 10)
                 const user = await prisma.user.create({
                     data: {
                         email: args.email,
                         password: password
                     }
                 })
-                const token = jwt.sign({ userId: user.id }, APP_SECRET);
                 return {
-                    token
+                    token: jwt.sign({ userId: user.id }, APP_SECRET)
                 }
             }
         }),
@@ -153,24 +161,22 @@ builder.mutationType({
             },
 
             resolve: async (parent, args) => {
-
-                const user = await prisma.user.findUnique({
+                const user = await prisma.user.findFirst({
                     where: {
                         email: args.email
                     }
                 })
                 if (!user) {
-                    throw new GraphQLError("User not found")
+                    throw new GraphQLError('No such user found')
                 }
-                const passwordValid = await bcrypt.compare(args.password, user.password);
-                if (!passwordValid) {
-                    throw new GraphQLError("Invalid password")
-                }
-                const token = jwt.sign({ userId: user.id }, APP_SECRET);
 
-                
+                const valid = await bcrypt.compare(args.password, user.password)
+                if (!valid) {
+                    throw new GraphQLError('Invalid password')
+                }
+
                 return {
-                    token
+                    token: jwt.sign({ userId: user.id }, APP_SECRET)
                 }
             },
         }),
