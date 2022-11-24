@@ -50,3 +50,6 @@ query printAll {
   }
 }
 
+{
+  "Authorization" : "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjYsImlhdCI6MTY2OTI3NzQ2Mn0.bu2EiWGKDSo6soCSNu0hQ9XF7rIhKghl3pHrVj7-5Xw"
+}

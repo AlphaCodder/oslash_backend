@@ -73,39 +73,44 @@ builder.queryType({
             resolve: () => prisma.user.findMany(),
         }),
         getUrl: t.field({
-            type: "String",
+            type: "ShortcutItem",
             args: {
-                email: t.arg.string({
-                    required: true,
-                }),
                 title: t.arg.string({
                     required: true,
                 }),
             },
-            resolve: async (parent, args) => {
-                const user = await prisma.user.findUnique({
+            resolve: async (root, args, contextValue) => {
+                const { userId } = contextValue.req;
+                if (!userId) {
+                    throw new GraphQLError('Not authenticated')
+                }
+                const shortcutItem = await prisma.shortcutItem.findFirst({
                     where: {
-                        email: args.email
+                        userId: userId,
+                        title: args.title
                     }
                 })
-                if (!user) {
-                    throw new GraphQLError("User not found")
+                if (!shortcutItem) {
+                    throw new GraphQLError('Shortcut not found')
                 }
-                // check if shortcut already exists
-                const shortcutIsPresent = await prisma.shortcutItem.findFirstOrThrow({
-                    where: {
-                        title: args.title,
-                        userId: user.id
-                    }
-                })
-                if (!shortcutIsPresent) {
-                    throw new GraphQLError("Shortcut not found")
-                }
-                return shortcutIsPresent.url
-                
-                
+                return shortcutItem;
             }
-        })
+           
+        }),
+        getMyShortcuts: t.field({
+            type: ["ShortcutItem"],
+            resolve: async (parent, args, context) => {
+                const userId = context.req.userId
+                if (!userId) {
+                    throw new GraphQLError("Not authenticated")
+                }
+                return await prisma.shortcutItem.findMany({
+                    where: {
+                        userId: userId
+                    }
+                })
+            }
+        }),
     })
 });
 
@@ -193,7 +198,8 @@ builder.mutationType({
                 // check if shortcut already exists
                 const shortcutIsPresent = await prisma.shortcutItem.findFirst({
                     where: {
-                        title: args.title
+                        title: args.title,
+                        userId: user.id
                     }
                 })
                 if (shortcutIsPresent) {
