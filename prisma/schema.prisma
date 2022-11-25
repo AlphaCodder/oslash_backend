@@ -27,3 +27,11 @@ model ShortcutItem {
   user      User     @relation(fields: [userId], references: [id])
   userId    Int
 }
+
+// status model with a name and a list of shortcutoperations
+model Stats {
+  id          Int @id @default(autoincrement())
+  operation   String
+  success     Boolean
+  resTime     Int 
+}

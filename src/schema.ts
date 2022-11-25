@@ -7,12 +7,19 @@ import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 
 type AuthToken = {
-    token : string;
+    token: string;
 }
 
-type Performance = {
-    success: number
-    failure: number
+type Stats = {
+    operation: string;
+    sucess: boolean;
+    resTime: number;
+}
+
+type Metrics = {
+    SuccessRate: number;
+    FailureRate: number;
+    AverageResponseTime: number;
 }
 
 type ShortcutItem = {
@@ -33,6 +40,8 @@ const builder = new SchemaBuilder<{
         User: User;
         ShortcutItem: ShortcutItem;
         AuthToken: AuthToken;
+        Stats: Stats;
+        Metrics: Metrics;
     },
 }>({
 });
@@ -42,6 +51,22 @@ builder.objectType('AuthToken', {
         token: t.exposeString('token'),
     }),
 });
+
+builder.objectType('Stats', {
+    fields: t => ({
+        operation: t.exposeString('operation'),
+        sucess: t.exposeBoolean('sucess'),
+        resTime: t.exposeInt('resTime'),
+    }),
+})
+
+builder.objectType('Metrics', {
+    fields: t => ({
+        SuccessRate: t.exposeFloat('SuccessRate'),
+        FailureRate: t.exposeFloat('FailureRate'),
+        AverageResponseTime: t.exposeFloat('AverageResponseTime'),
+    }),
+})
 
 builder.objectType("ShortcutItem", {
     fields: t => ({
@@ -99,7 +124,7 @@ builder.queryType({
                 }
                 return shortcutItem;
             }
-           
+
         }),
         getMyShortcuts: t.field({
             type: ["ShortcutItem"],
@@ -113,6 +138,135 @@ builder.queryType({
                         userId: userId
                     }
                 })
+            }
+        }),
+        getUrlFetchStats: t.field({
+            type: ["Metrics"],
+            resolve: async (parent, args, context) => {
+                const successCount = await prisma.stats.count({
+                    where: {
+                        operation: "getUrl",
+                        success: true
+                    }
+                })
+                const failureCount = await prisma.stats.count({
+                    where: {
+                        operation: "getUrl",
+                        success: false
+                    }
+                })
+                const totalCount = await prisma.stats.count({
+                    where: {
+                        operation: "getUrl",
+                    }
+                })
+                const aggregations = await prisma.stats.aggregate({
+                    _avg: {
+                      resTime: true,
+                    },
+                  })
+                return [{
+                    SuccessRate: (successCount / totalCount) * 100,
+                    FailureRate: (failureCount / totalCount) * 100,
+                    AverageResponseTime: aggregations._avg.resTime
+                }]
+            }
+        }),
+        getAddStats: t.field({
+            type: ["Metrics"],
+            resolve: async (parent, args, context) => {
+                const successCount = await prisma.stats.count({
+                    where: {
+                        operation: "addShortcut",
+                        success: true
+                    }
+                })
+                const failureCount = await prisma.stats.count({
+                    where: {
+                        operation: "addShortcut",
+                        success: false
+                    }
+                })
+                const totalCount = await prisma.stats.count({
+                    where: {
+                        operation: "addShortcut",
+                    }
+                })
+                const aggregations = await prisma.stats.aggregate({
+                    _avg: {
+                      resTime: true,
+                    },
+                  })
+                return [{
+                    SuccessRate: (successCount / totalCount) * 100,
+                    FailureRate: (failureCount / totalCount) * 100,
+                    AverageResponseTime: aggregations._avg.resTime
+                }]
+            }
+        }),
+        getDeleteStats: t.field({
+            type: ["Metrics"],
+            resolve: async (parent, args, context) => {
+                const successCount = await prisma.stats.count({
+                    where: {
+                        operation: "removeShortcut",
+                        success: true
+                    }
+                })
+                const failureCount = await prisma.stats.count({
+                    where: {
+                        operation: "removeShortcut",
+                        success: false
+                    }
+                })
+
+                const totalCount = await prisma.stats.count({
+                    where: {
+                        operation: "removeShortcut",
+                    }
+                })
+                const aggregations = await prisma.stats.aggregate({
+                    _avg: {
+                      resTime: true,
+                    },
+                  })
+                return [{
+                    SuccessRate: (successCount / totalCount) * 100,
+                    FailureRate: (failureCount / totalCount) * 100,
+                    AverageResponseTime: aggregations._avg.resTime
+                }]
+            }
+        }),
+        getUpdateStats: t.field({
+            type: ["Metrics"],
+            resolve: async (parent, args, context) => {
+                const successCount = await prisma.stats.count({
+                    where: {
+                        operation: "updateShortcut",
+                        success: true
+                    }
+                })
+                const failureCount = await prisma.stats.count({
+                    where: {
+                        operation: "updateShortcut",
+                        success: false
+                    }
+                })
+                const totalCount = await prisma.stats.count({
+                    where: {
+                        operation: "updateShortcut",
+                    }
+                })
+                const aggregations = await prisma.stats.aggregate({
+                    _avg: {
+                      resTime: true,
+                    },
+                  })
+                return [{
+                    SuccessRate: (successCount / totalCount) * 100,
+                    FailureRate: (failureCount / totalCount) * 100,
+                    AverageResponseTime: aggregations._avg.resTime
+                }]
             }
         }),
     })
@@ -131,7 +285,7 @@ builder.mutationType({
                     required: true,
                 }),
             },
-           resolve: async (parent, args) => {
+            resolve: async (parent, args) => {
                 // check if user already exists
                 const userExists = await prisma.user.findFirst({
                     where: {
@@ -184,7 +338,7 @@ builder.mutationType({
                 }
             },
         }),
-        
+
         // create shortcut to user
         addShortcut: t.field({
             type: "ShortcutItem",
@@ -274,7 +428,7 @@ builder.mutationType({
                     required: true,
                 }),
             },
-            resolve: async (parent, args, contextValue ) => {
+            resolve: async (parent, args, contextValue) => {
                 const user = await prisma.user.findUnique({
                     where: {
                         id: contextValue.req.userId,
@@ -305,6 +459,7 @@ builder.mutationType({
         }),
     })
 });
+
 
 export const schema = builder.toSchema()
 export { AuthToken }
