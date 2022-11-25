@@ -12,7 +12,7 @@ type AuthToken = {
 
 type Stats = {
     operation: string;
-    sucess: boolean;
+    success: boolean;
     resTime: number;
 }
 
@@ -149,6 +149,10 @@ builder.queryType({
             },
             resolve: async (parent, args, context) => {
                 const opCode = args.operation;
+                if(!["addShortcut", "removeShortcut", "updateShortcut", "getUrl"].includes(opCode)){
+                    return  new GraphQLError("Invalid operation code")
+                }
+                    
                 const successCount = await prisma.stats.count({
                     where: {
                         operation: opCode,
@@ -178,6 +182,12 @@ builder.queryType({
                 }]
             }
         }),
+        getResponseTime: t.field({
+            type: ["Stats"],
+            resolve: async (parent, args, context) => {
+                return await prisma.stats.findMany()
+            }
+        })
     }),
 });
 
