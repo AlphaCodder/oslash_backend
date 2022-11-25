@@ -8,8 +8,8 @@ const authPlugin: Plugin = {
     // get the authorization header from the request
     onExecute({ args:  { contextValue, operationName }, setResultAndStopExecution }) {
         // skip when login and signup mutations are called 
-        if (operationName === 'login' || operationName === 'signup') return;
-        
+        if (['login', 'signup', 'getMetrics'].includes(operationName)) return;
+
         const token = contextValue.req.headers.authorization
         if (!token) {
             setResultAndStopExecution({

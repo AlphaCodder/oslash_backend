@@ -140,24 +140,30 @@ builder.queryType({
                 })
             }
         }),
-        getUrlFetchStats: t.field({
+        getMetrics: t.field({
             type: ["Metrics"],
+            args: {
+                operation: t.arg.string({
+                    required: true,
+                }),
+            },
             resolve: async (parent, args, context) => {
+                const opCode = args.operation;
                 const successCount = await prisma.stats.count({
                     where: {
-                        operation: "getUrl",
+                        operation: opCode,
                         success: true
                     }
                 })
                 const failureCount = await prisma.stats.count({
                     where: {
-                        operation: "getUrl",
+                        operation: opCode,
                         success: false
                     }
                 })
                 const totalCount = await prisma.stats.count({
                     where: {
-                        operation: "getUrl",
+                        operation: opCode,
                     }
                 })
                 const aggregations = await prisma.stats.aggregate({
@@ -172,104 +178,7 @@ builder.queryType({
                 }]
             }
         }),
-        getAddStats: t.field({
-            type: ["Metrics"],
-            resolve: async (parent, args, context) => {
-                const successCount = await prisma.stats.count({
-                    where: {
-                        operation: "addShortcut",
-                        success: true
-                    }
-                })
-                const failureCount = await prisma.stats.count({
-                    where: {
-                        operation: "addShortcut",
-                        success: false
-                    }
-                })
-                const totalCount = await prisma.stats.count({
-                    where: {
-                        operation: "addShortcut",
-                    }
-                })
-                const aggregations = await prisma.stats.aggregate({
-                    _avg: {
-                      resTime: true,
-                    },
-                  })
-                return [{
-                    SuccessRate: (successCount / totalCount) * 100,
-                    FailureRate: (failureCount / totalCount) * 100,
-                    AverageResponseTime: aggregations._avg.resTime
-                }]
-            }
-        }),
-        getDeleteStats: t.field({
-            type: ["Metrics"],
-            resolve: async (parent, args, context) => {
-                const successCount = await prisma.stats.count({
-                    where: {
-                        operation: "removeShortcut",
-                        success: true
-                    }
-                })
-                const failureCount = await prisma.stats.count({
-                    where: {
-                        operation: "removeShortcut",
-                        success: false
-                    }
-                })
-
-                const totalCount = await prisma.stats.count({
-                    where: {
-                        operation: "removeShortcut",
-                    }
-                })
-                const aggregations = await prisma.stats.aggregate({
-                    _avg: {
-                      resTime: true,
-                    },
-                  })
-                return [{
-                    SuccessRate: (successCount / totalCount) * 100,
-                    FailureRate: (failureCount / totalCount) * 100,
-                    AverageResponseTime: aggregations._avg.resTime
-                }]
-            }
-        }),
-        getUpdateStats: t.field({
-            type: ["Metrics"],
-            resolve: async (parent, args, context) => {
-                const successCount = await prisma.stats.count({
-                    where: {
-                        operation: "updateShortcut",
-                        success: true
-                    }
-                })
-                const failureCount = await prisma.stats.count({
-                    where: {
-                        operation: "updateShortcut",
-                        success: false
-                    }
-                })
-                const totalCount = await prisma.stats.count({
-                    where: {
-                        operation: "updateShortcut",
-                    }
-                })
-                const aggregations = await prisma.stats.aggregate({
-                    _avg: {
-                      resTime: true,
-                    },
-                  })
-                return [{
-                    SuccessRate: (successCount / totalCount) * 100,
-                    FailureRate: (failureCount / totalCount) * 100,
-                    AverageResponseTime: aggregations._avg.resTime
-                }]
-            }
-        }),
-    })
+    }),
 });
 
 // Mutations on the schema
